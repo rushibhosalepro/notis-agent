@@ -1,11 +1,11 @@
-import { InMemoryRunner } from "@google/adk";
-import { notisAgent } from "./notisAgent";
+import { BaseAgent, InMemoryRunner } from "@google/adk";
+import {} from "./notisAgent";
 let _runner: InMemoryRunner | null = null;
 
-export async function getRunner(): Promise<InMemoryRunner> {
+export async function getRunner(agent: BaseAgent): Promise<InMemoryRunner> {
   if (_runner) return _runner;
 
-  _runner = new InMemoryRunner({ agent: notisAgent, appName: "notis" });
+  _runner = new InMemoryRunner({ agent, appName: "notis" });
   return _runner;
 }
 

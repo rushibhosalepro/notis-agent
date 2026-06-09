@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import multer from "multer";
 import { runAgent } from "./agent/runAgent";
+import { createNotisAgent } from "./agent/notisAgent";
 
 const app = express();
 app.use(cors());
@@ -41,7 +42,8 @@ app.post("/api/:caseId/chat", upload.single("file"), async (req, res) => {
       .json({ ok: false, error: "caseId must be a string" });
   }
 
-  await runAgent({ caseId, file, userId }, messages, res);
+  const noticeAgent = createNotisAgent({ caseId, userId, file });
+  await runAgent({ caseId, file, userId }, messages, res, noticeAgent);
   //   res.send(caseId);
 });
 app.get("/health", (_, res) => res.json({ status: "ok" }));

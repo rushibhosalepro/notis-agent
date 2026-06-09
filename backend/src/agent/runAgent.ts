@@ -1,7 +1,7 @@
 import type { Response } from "express";
 import type { Content } from "@google/genai";
 import type { AgentContext, Message } from "../types";
-import { StreamingMode } from "@google/adk";
+import { BaseAgent, StreamingMode } from "@google/adk";
 import { getRunner, ensureSessionExists } from "./runner";
 import { send } from "../utils/sse";
 
@@ -24,6 +24,7 @@ export async function runAgent(
   context: AgentContext,
   messages: Message[],
   res: Response,
+  agent: BaseAgent,
 ) {
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
@@ -42,7 +43,7 @@ export async function runAgent(
   }
 
   const newMessage = buildNewMessage(latestMessage, fileInstruction);
-  const runner = await getRunner();
+  const runner = await getRunner(agent);
 
   await ensureSessionExists(runner, context.caseId, context.userId);
 
@@ -70,7 +71,6 @@ export async function runAgent(
         if (part.functionCall) {
           const { name, id, args } = part.functionCall;
 
-          // Special-case: agent is asking the user a question
           if (name === "ask_user" || name === "promptUser") {
             send(res, {
               type: "ask_user",
