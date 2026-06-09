@@ -1,4 +1,5 @@
 import { LlmAgent } from "@google/adk";
+import { ThinkingLevel } from "@google/genai";
 import { createElasticMCPToolset } from "../utils/mcp";
 import { SYSTEM_PROMPT } from "./prompt";
 
@@ -11,4 +12,11 @@ export const notisAgent = new LlmAgent({
     "AI GST Compliance Agent — reads GST notices, searches Indian tax law, and drafts legally-grounded response letters.",
   instruction: SYSTEM_PROMPT,
   tools: [elasticToolset],
+
+  generateContentConfig: {
+    thinkingConfig: {
+      includeThoughts: true,
+      thinkingLevel: ThinkingLevel.MEDIUM,
+    },
+  },
 });

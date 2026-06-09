@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import multer from "multer";
+import { runAgent } from "./agent/runAgent";
 
 const app = express();
 app.use(cors());
@@ -28,7 +29,20 @@ app.post("/api/:caseId/chat", upload.single("file"), async (req, res) => {
   const userId = req.body.userId;
   const file = req.file ?? null;
 
-  res.send(caseId);
+  if (!messages || !Array.isArray(messages)) {
+    return res
+      .status(400)
+      .json({ ok: false, error: "messages array is required" });
+  }
+
+  if (!caseId || Array.isArray(caseId)) {
+    return res
+      .status(400)
+      .json({ ok: false, error: "caseId must be a string" });
+  }
+
+  await runAgent({ caseId, file, userId }, messages, res);
+  //   res.send(caseId);
 });
 app.get("/health", (_, res) => res.json({ status: "ok" }));
 
