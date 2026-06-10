@@ -75,15 +75,15 @@ User (notice upload / chat)
 
 ### Tech Stack
 
-| Layer       | Technology                                      |
-| ----------- | ----------------------------------------------- |
-| AI Agent    | Gemini 3.1 Pro via Google ADK                   |
-| Search      | Elasticsearch (Elastic Cloud)                   |
-| Agent Tools | Elasticsearch MCP Server + ADK MCP tool support |
-| Database    | MongoDB Atlas                                   |
-| Backend     | Node.js, Express, TypeScript, Bun               |
-| Frontend    | Next.js, Tailwind CSS                           |
-| Streaming   | Server-Sent Events (SSE)                        |
+| Layer         | Technology                                                     |
+| ------------- | -------------------------------------------------------------- |
+| AI Agent      | Gemini 3.1 Pro via Google Cloud Agent Builder (Google ADK)     |
+| Search        | Elasticsearch (Elastic Cloud)                                  |
+| Agent Tools   | Elastic MCP Server + Google ADK native MCP tool support        |
+| Database      | MongoDB Atlas                                                  |
+| Backend       | Express, TypeScript, Bun                                       |
+| Frontend      | Next.js, Tailwind CSS                                          |
+| Streaming     | Server-Sent Events (SSE)                                       |
 
 ---
 
@@ -181,7 +181,7 @@ NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
 ```bash
 # Clone the repo
 git clone https://github.com/rushibhosalepro/notis-agent
-cd notis
+cd notis-agent
 
 # Install backend dependencies
 cd backend
@@ -289,6 +289,16 @@ notis-agent/
 - **Vernacular language support** — Hindi and regional languages for small business owners
 - **Deadline tracking with reminders** — automatic alerts before notice response deadlines
 - **GSTR return file analysis** — upload a return file and get a full audit before filing
+
+---
+
+## 🧠 What We Learned
+
+- **ADK's MCP tool support is production-ready** — connecting `MCPToolset` to Elastic's Kibana MCP endpoint required zero custom RAG code; the agent calls search tools as natural function calls during reasoning.
+- **Legal grounding is harder than it looks** — a plain LLM hallucinates sections and dates. Grounding every answer in Elasticsearch-retrieved documents eliminated that class of error entirely.
+- **SSE streaming with ADK needs care** — ADK emits intermediate thinking events and tool call events mixed with final text; writing the event filter to surface only what the user needs took real iteration.
+- **Small businesses need plain language first** — the response format evolved through testing to put the "Plain English Summary" last in the prompt template; users skipped the legal citations and went straight to the summary every time.
+- **Parsing Indian legal PDFs is a project in itself** — CGST Act, state SGSTs, and CBIC circulars each had different PDF structures and section numbering schemes; a Gemini-powered parsing pipeline was necessary to build a clean index.
 
 ---
 
