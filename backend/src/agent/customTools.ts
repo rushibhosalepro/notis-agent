@@ -31,7 +31,6 @@ export const createCustomTools = (context: AgentContext) => {
 
         try {
           const response = await ai.models.generateContent({
-            // model: "gemini-2.5-flash",
             model: process.env.GEMINI_MODEL!,
             contents: [
               { inlineData: { data: base64, mimeType } },
@@ -168,13 +167,13 @@ export const createCustomTools = (context: AgentContext) => {
     }),
 
     new FunctionTool({
-      name: "ask_user_quetion",
+      name: "ask_user_question",
       description:
         "Ask the user a clarifying question with predefined options when critical information is missing. Only use when you cannot reasonably infer the answer. Ask ONE question at a time.",
       parameters: z.object({
-        quetions: z.array(
+        questions: z.array(
           z.object({
-            quetion: z
+            questions: z
               .string()
               .describe("The clarifying question to show the user."),
             options: z.array(

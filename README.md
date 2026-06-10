@@ -87,14 +87,20 @@ User (notice upload / chat)
 
 ---
 
-## 🔍 Why Elasticsearch
+## 🔍 Why Elasticsearch (and how we used it)
 
-GST compliance is fundamentally a **search problem**:
+The easy path is one index, dump all PDFs in, run a semantic search. That produces generic results.
 
-- **174 sections** in the CGST Act alone
-- **Finance Act amendments** changed Section 16, 73, 74 and penalty provisions in 2023 and 2026
-- **State acts** add provisions on top of central law
-- **CBIC Circulars** clarify enforcement — a circular can override how a section is applied
+Indian GST law is **layered** — a base act, amendments that override specific sections, state acts that add provisions on top, and circulars that change how sections are enforced in practice. A single index flattens this hierarchy and loses it.
+
+We built **7 separate indices**, each scoped to one layer of the law:
+
+- `gst-cgst-2017` — base act, so the agent always searches foundation law first
+- `gst-amendments-2023` / `gst-amendments-2026` — isolated so the agent can explicitly check "did this section change?"
+- `gst-sgst-mh/ka/dl` — state-specific, searched only when the GSTIN matches that state
+- `gst-circulars` — enforcement guidance, always searched last since circulars clarify, not define
+
+Each document was parsed with a **Gemini-powered pipeline** that extracts structured metadata — section number, chapter, notice types, keywords, category — before indexing. This means queries return the right section, not just the right paragraph.
 
 Every answer must be grounded in retrieved documents — not AI memory. A wrong legal citation costs real money.
 

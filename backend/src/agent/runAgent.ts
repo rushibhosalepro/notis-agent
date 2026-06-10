@@ -71,12 +71,13 @@ export async function runAgent(
         if (part.functionCall) {
           const { name, id, args } = part.functionCall;
 
-          if (name === "ask_user" || name === "promptUser") {
+          if (name === "ask_user" || name === "promptUser" || name === "ask_user_question") {
+            const first = (args?.questions as Array<{ question: string; options: string[] }>)?.[0];
             send(res, {
               type: "ask_user",
               id: id ?? "",
-              question: (args?.question as string) ?? "",
-              options: (args?.options as string[]) ?? [],
+              question: first?.question ?? (args?.question as string) ?? "",
+              options: first?.options ?? (args?.options as string[]) ?? [],
             });
           } else {
             send(res, {
