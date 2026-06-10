@@ -48,9 +48,39 @@ const ChatPage = ({ caseId, userId }: Props) => {
   const [file, setFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
 
   const { pending, clearPending } = useCaseStore();
   const hasAutoSent = useRef(false);
+
+  console.log(pending);
+  useEffect(() => {
+    if (pending) return;
+    const loadHistory = async () => {
+      setHistoryLoading(true);
+      try {
+        const res = await fetch(`${SERVER_URL}/api/${caseId}/messages`);
+        if (!res.ok) return;
+        const data: {
+          messageId: string;
+          role: "user" | "assistant";
+          content: string;
+        }[] = await res.json();
+        setMessages(
+          data.map((m) => ({
+            id: m.messageId,
+            role: m.role,
+            content: m.content,
+          })),
+        );
+      } catch {
+        // silent fail — chat still works without history
+      } finally {
+        setHistoryLoading(false);
+      }
+    };
+    loadHistory();
+  }, []);
 
   useEffect(() => {
     if (hasAutoSent.current || !pending) return;
@@ -76,6 +106,7 @@ const ChatPage = ({ caseId, userId }: Props) => {
     const currentInput = overridePrompt ?? input;
     const currentFile = overrideFile !== undefined ? overrideFile : file;
 
+    console.log(currentFile);
     if (!currentInput.trim() && !currentFile) return;
 
     setLoading(true);
@@ -113,9 +144,9 @@ const ChatPage = ({ caseId, userId }: Props) => {
     try {
       let response: Response;
 
-      if (file) {
+      if (currentFile) {
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", currentFile);
         formData.append("userId", userId);
         formData.append("caseId", caseId);
         formData.append("messages", JSON.stringify(history));
@@ -250,7 +281,14 @@ const ChatPage = ({ caseId, userId }: Props) => {
       {/* Scrollable messages */}
       <div className="h-full overflow-y-auto pt-14 pb-44 scroll-smooth">
         <div className="max-w-3xl w-full mx-auto px-4 py-6">
-          <ChatBox messages={messages} loading={loading} />
+          {historyLoading ? (
+            <div className="flex items-center justify-center py-16 text-gray-500 text-sm">
+              <LoaderCircle className="w-4 h-4 animate-spin mr-2" />
+              Loading conversation...
+            </div>
+          ) : (
+            <ChatBox messages={messages} loading={loading} />
+          )}
         </div>
       </div>
 

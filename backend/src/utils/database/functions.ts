@@ -7,6 +7,17 @@ import type {
 } from "../../types";
 import { casesCol } from "./mongodb";
 
+export async function getMessages(args: {
+  caseId: string;
+}): Promise<Message[]> {
+  const col = await casesCol();
+  const c = await col.findOne(
+    { caseId: args.caseId },
+    { projection: { messages: 1, _id: 0 } },
+  );
+  return c?.messages ?? [];
+}
+
 export async function updateCaseStatus(args: {
   caseId: string;
   status: CaseStatus;

@@ -12,13 +12,17 @@ import {
 
 export const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
-export const createCustomTools = (context: AgentContext) => {
+export const createCustomTools = (context: {
+  caseId: string;
+  userId: string;
+  file: Express.Multer.File | null;
+}) => {
   return [
     new FunctionTool({
       name: "analyze_file",
       description:
         "Analyze an uploaded GST notice image or PDF and extract structured information",
-      parameters: z.object({}),
+      parameters: z.object({ path: z.string() }),
       execute: async () => {
         const { file } = context;
 

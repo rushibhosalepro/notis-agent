@@ -7,6 +7,7 @@ import { createNotisAgent } from "./agent/notisAgent";
 import { ObjectId } from "mongodb";
 import type { Case, Message } from "./types";
 import { casesCol } from "./utils/database/mongodb";
+import { appendMessage, getMessages } from "./utils/database/functions";
 
 const app = express();
 app.use(cors());
@@ -64,6 +65,20 @@ app.post("/api/case/start", async (req, res) => {
     return res.status(500).json({ ok: false, error: "Internal server error" });
   }
 });
+app.get("/api/:caseId/messages", async (req, res) => {
+  const { caseId } = req.params;
+  if (!caseId || Array.isArray(caseId)) {
+    return res.status(400).json({ ok: false, error: "caseId must be a string" });
+  }
+  try {
+    const msgs = await getMessages({ caseId });
+    return res.json(msgs);
+  } catch (err) {
+    console.error("Failed to fetch messages:", err);
+    return res.status(500).json({ ok: false, error: "Internal server error" });
+  }
+});
+
 app.post("/api/:caseId/chat", upload.single("file"), async (req, res) => {
   const { caseId } = req.params;
   const messages =
@@ -86,9 +101,14 @@ app.post("/api/:caseId/chat", upload.single("file"), async (req, res) => {
       .json({ ok: false, error: "caseId must be a string" });
   }
 
+  // Save new user message — skip if length === 1 (first message already saved at case creation)
+  const latestMsg = messages[messages.length - 1];
+  if (messages.length > 1 && latestMsg?.role === "user") {
+    await appendMessage({ caseId, role: "user", content: latestMsg.content });
+  }
+
   const noticeAgent = createNotisAgent({ caseId, userId, file });
   await runAgent({ caseId, file, userId }, messages, res, noticeAgent);
-  //   res.send(caseId);
 });
 app.get("/health", (_, res) => res.json({ status: "ok" }));
 

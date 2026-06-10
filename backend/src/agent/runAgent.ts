@@ -4,6 +4,7 @@ import type { AgentContext, Message } from "../types";
 import { BaseAgent, StreamingMode } from "@google/adk";
 import { getRunner, ensureSessionExists } from "./runner";
 import { send } from "../utils/sse";
+import { appendMessage } from "../utils/database/functions";
 
 const buildNewMessage = (
   message: Message,
@@ -32,6 +33,7 @@ export async function runAgent(
   res.flushHeaders();
 
   const file = context.file;
+  console.log(`agent got the file - ${file?.originalname}`);
   const fileInstruction = file
     ? `User has uploaded a file: ${file.originalname}`
     : "";
@@ -57,6 +59,8 @@ export async function runAgent(
       },
     });
 
+    let fullAssistantText = "";
+
     for await (const event of eventStream) {
       const parts = event.content?.parts || [];
 
@@ -71,8 +75,14 @@ export async function runAgent(
         if (part.functionCall) {
           const { name, id, args } = part.functionCall;
 
-          if (name === "ask_user" || name === "promptUser" || name === "ask_user_question") {
-            const first = (args?.questions as Array<{ question: string; options: string[] }>)?.[0];
+          if (
+            name === "ask_user" ||
+            name === "promptUser" ||
+            name === "ask_user_question"
+          ) {
+            const first = (
+              args?.questions as Array<{ question: string; options: string[] }>
+            )?.[0];
             send(res, {
               type: "ask_user",
               id: id ?? "",
@@ -109,9 +119,18 @@ export async function runAgent(
         }
 
         if (part.text) {
+          fullAssistantText += part.text;
           send(res, { type: "text", text: part.text });
         }
       }
+    }
+
+    if (fullAssistantText) {
+      await appendMessage({
+        caseId: context.caseId,
+        role: "assistant",
+        content: fullAssistantText,
+      });
     }
 
     send(res, { type: "done" });
