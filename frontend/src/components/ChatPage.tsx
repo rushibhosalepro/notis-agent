@@ -249,7 +249,8 @@ const ChatPage = ({ caseId, userId }: Props) => {
               updateAssistant((m) => ({
                 ...m,
                 content:
-                  m.content || "Sorry, something went wrong. Please try again.",
+                  m.content ||
+                  `Something went wrong: ${event.message}. Please try again.`,
               }));
               break;
 

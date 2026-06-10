@@ -289,7 +289,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* <CaseHistorySection /> */}
+        <CaseHistorySection />
       </div>
     </main>
   );
