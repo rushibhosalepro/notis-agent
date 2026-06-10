@@ -31,7 +31,8 @@ export const createCustomTools = (context: AgentContext) => {
 
         try {
           const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
+            // model: "gemini-2.5-flash",
+            model: process.env.GEMINI_MODEL!,
             contents: [
               { inlineData: { data: base64, mimeType } },
               {
