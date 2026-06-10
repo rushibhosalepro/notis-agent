@@ -1,14 +1,136 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUp, LoaderCircle, Paperclip, X } from "lucide-react";
+import {
+  ArrowUp,
+  Clock,
+  FileText,
+  LoaderCircle,
+  Paperclip,
+  X,
+} from "lucide-react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { SERVER_URL, userId } from "@/lib/utils";
 import { useCaseStore } from "@/stores/useCaseStore";
+
+interface CaseSummary {
+  caseId: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  noticeDetails?: {
+    noticeType?: string;
+    demandAmount?: number;
+    arnNumber?: string;
+  };
+  messages?: Array<{ content: string }>;
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  OPEN: "bg-zinc-700/60 text-zinc-300",
+  ANALYZING: "bg-blue-900/50 text-blue-300",
+  DOCS_NEEDED: "bg-yellow-900/50 text-yellow-300",
+  DRAFTING: "bg-purple-900/50 text-purple-300",
+  SUBMITTED: "bg-emerald-900/50 text-emerald-300",
+  CLOSED: "bg-zinc-800 text-zinc-500",
+};
+
+function CaseHistorySection() {
+  const [cases, setCases] = useState<CaseSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch(`${SERVER_URL}/api/user/${userId}/cases`)
+      .then((r) => r.json())
+      .then((data) => setCases(Array.isArray(data) ? data : []))
+      .catch(() => setCases([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8 text-gray-400 text-sm gap-2">
+        <LoaderCircle className="w-4 h-4 animate-spin" />
+        Loading history...
+      </div>
+    );
+  }
+
+  if (cases.length === 0) return null;
+
+  return (
+    <section className="w-full max-w-3xl mx-auto mt-16 px-4 pb-16">
+      <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-4">
+        Previous Cases
+      </h2>
+      <div className="grid gap-3">
+        {cases.map((c) => {
+          const preview = c.messages?.[0]?.content ?? "No description";
+          const date = new Date(c.createdAt).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          });
+          const statusLabel = c.status.replace("_", " ");
+          const statusCls = STATUS_STYLES[c.status] ?? STATUS_STYLES.OPEN;
+
+          return (
+            <button
+              key={c.caseId}
+              onClick={() => router.push(`/case/${c.caseId}`)}
+              className="w-full text-left bg-white border border-gray-200 hover:border-emerald-300 hover:shadow-sm rounded-2xl px-5 py-4 transition-all group"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="shrink-0 w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center mt-0.5">
+                    <FileText className="w-4 h-4 text-emerald-600" />
+                  </div>
+                  <div className="min-w-0">
+                    {c.noticeDetails?.noticeType && (
+                      <p className="text-xs font-semibold text-emerald-700 mb-0.5">
+                        {c.noticeDetails.noticeType}
+                        {c.noticeDetails.arnNumber && (
+                          <span className="text-gray-400 font-normal ml-1">
+                            · {c.noticeDetails.arnNumber}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                    <p className="text-sm text-gray-700 truncate leading-snug">
+                      {preview}
+                    </p>
+                    {c.noticeDetails?.demandAmount !== undefined && (
+                      <p className="text-xs text-red-600 font-medium mt-1">
+                        Demand: ₹
+                        {c.noticeDetails.demandAmount.toLocaleString("en-IN")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="shrink-0 flex flex-col items-end gap-1.5">
+                  <span
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${statusCls}`}
+                  >
+                    {statusLabel}
+                  </span>
+                  <span className="flex items-center gap-1 text-[11px] text-gray-400">
+                    <Clock className="w-3 h-3" />
+                    {date}
+                  </span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
 
 const QUICK_PROMPTS = [
   "I got an ASMT-10 notice, what should I do?",
@@ -166,6 +288,8 @@ export default function App() {
             ))}
           </div>
         </section>
+
+        {/* <CaseHistorySection /> */}
       </div>
     </main>
   );

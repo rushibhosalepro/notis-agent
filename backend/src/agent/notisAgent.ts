@@ -7,6 +7,7 @@ import { SYSTEM_PROMPT } from "./prompt";
 import { ThinkingLevel } from "@google/genai";
 const elasticToolset = createElasticMCPToolset();
 
+// closure required here  - to pass the extra context and sensetive info that we avoid passing throught agent to tools execute
 export function createNotisAgent({
   caseId,
   userId,

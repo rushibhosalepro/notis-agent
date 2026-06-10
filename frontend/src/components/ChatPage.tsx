@@ -61,20 +61,23 @@ const ChatPage = ({ caseId, userId }: Props) => {
       try {
         const res = await fetch(`${SERVER_URL}/api/${caseId}/messages`);
         if (!res.ok) return;
+
         const data: {
           messageId: string;
           role: "user" | "assistant";
           content: string;
+          fileName?: string;
         }[] = await res.json();
+        console.log(data);
         setMessages(
           data.map((m) => ({
             id: m.messageId,
             role: m.role,
             content: m.content,
+            ...(m.fileName ? { fileName: m.fileName } : {}),
           })),
         );
       } catch {
-        // silent fail — chat still works without history
       } finally {
         setHistoryLoading(false);
       }
@@ -106,7 +109,6 @@ const ChatPage = ({ caseId, userId }: Props) => {
     const currentInput = overridePrompt ?? input;
     const currentFile = overrideFile !== undefined ? overrideFile : file;
 
-    console.log(currentFile);
     if (!currentInput.trim() && !currentFile) return;
 
     setLoading(true);

@@ -142,19 +142,47 @@ const ToolCallBlock: React.FC<{ tool: ToolCall }> = ({ tool }) => {
 const AssistantMarkdown: React.FC<{ content: string }> = ({ content }) => (
   <div
     className={cn(
-      "prose prose-invert max-w-none",
-      "prose-p:leading-relaxed prose-p:my-2",
-      "prose-headings:text-zinc-100 prose-headings:font-semibold",
-      "prose-a:text-blue-400 prose-a:no-underline hover:prose-a:underline",
-      "prose-code:text-pink-300 prose-code:bg-zinc-800 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-[13px] prose-code:font-mono",
-      "prose-pre:bg-zinc-900 prose-pre:border prose-pre:border-zinc-700/60 prose-pre:rounded-xl prose-pre:text-[13px]",
-      "prose-pre:my-3 prose-pre:overflow-x-auto",
-      "prose-blockquote:border-l-zinc-600 prose-blockquote:text-zinc-400",
-      "prose-li:my-0.5",
-      "prose-strong:text-zinc-100 prose-strong:font-semibold",
-      "prose-hr:border-zinc-700",
-      "prose-table:text-[13px]",
-      "prose-th:text-zinc-300 prose-td:text-zinc-400",
+      "prose prose-invert max-w-none text-[15px] leading-7 text-zinc-200",
+
+      // paragraphs
+      "[&_p]:leading-7 [&_p]:my-3 [&_p]:text-zinc-300",
+
+      // headings — direct selectors beat prose defaults
+      "[&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-zinc-50 [&_h1]:mt-10 [&_h1]:mb-4 [&_h1]:pb-2 [&_h1]:border-b [&_h1]:border-zinc-700/50",
+      "[&_h2]:text-[17px] [&_h2]:font-semibold [&_h2]:text-zinc-100 [&_h2]:mt-9 [&_h2]:mb-3",
+      "[&_h3]:text-[15px] [&_h3]:font-semibold [&_h3]:text-zinc-100 [&_h3]:mt-8 [&_h3]:mb-2",
+      "[&_h4]:text-[14px] [&_h4]:font-semibold [&_h4]:text-zinc-300 [&_h4]:mt-6 [&_h4]:mb-2",
+
+      // lists
+      "[&_ul]:my-4 [&_ul]:pl-5 [&_ol]:my-4 [&_ol]:pl-5",
+      "[&_li]:my-2 [&_li]:text-zinc-300 [&_li]:leading-7",
+      "[&_li::marker]:text-emerald-500",
+
+      // inline code
+      "[&_:not(pre)>code]:text-emerald-300 [&_:not(pre)>code]:bg-zinc-800/80 [&_:not(pre)>code]:border [&_:not(pre)>code]:border-zinc-700/50 [&_:not(pre)>code]:px-1.5 [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:rounded-md [&_:not(pre)>code]:text-[13px] [&_:not(pre)>code]:font-mono",
+      "prose-code:before:content-none prose-code:after:content-none",
+
+      // code blocks
+      "[&_pre]:bg-zinc-900 [&_pre]:border [&_pre]:border-zinc-700/50 [&_pre]:rounded-xl [&_pre]:text-[13px] [&_pre]:my-5 [&_pre]:overflow-x-auto [&_pre]:shadow-md",
+
+      // blockquote
+      "[&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500/60 [&_blockquote]:bg-zinc-800/30 [&_blockquote]:rounded-r-lg [&_blockquote]:px-4 [&_blockquote]:py-2 [&_blockquote]:text-zinc-400 [&_blockquote]:not-italic [&_blockquote]:my-5",
+
+      // strong / em
+      "[&_strong]:text-zinc-50 [&_strong]:font-semibold",
+      "[&_em]:text-zinc-300",
+
+      // hr
+      "[&_hr]:border-zinc-700/60 [&_hr]:my-7",
+
+      // links
+      "[&_a]:text-emerald-400 [&_a]:no-underline hover:[&_a]:underline hover:[&_a]:text-emerald-300",
+
+      // tables
+      "[&_table]:text-[13px] [&_table]:my-5 [&_table]:w-full",
+      "[&_thead]:border-b [&_thead]:border-zinc-700",
+      "[&_th]:text-zinc-300 [&_th]:font-semibold [&_th]:py-2 [&_th]:px-3 [&_th]:text-left",
+      "[&_td]:text-zinc-400 [&_td]:py-2 [&_td]:px-3 [&_td]:border-b [&_td]:border-zinc-800",
     )}
   >
     <Markdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>
@@ -288,7 +316,23 @@ const ChatBox = ({ messages, loading = false }: Props) => {
 
             {isUser ? (
               <div className="flex flex-col w-full items-end gap-2">
-                {msg.file && <FilePreview file={msg.file} />}
+                {msg.file ? (
+                  <FilePreview file={msg.file} />
+                ) : msg.fileName ? (
+                  <div className="flex items-center gap-3 bg-zinc-800/80 border border-zinc-700/50 rounded-2xl rounded-tr-sm px-4 py-3 max-w-[260px]">
+                    <div className="shrink-0 w-9 h-9 rounded-lg bg-zinc-700/60 border border-zinc-600/40 flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-zinc-400" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-medium text-zinc-200 truncate">
+                        {msg.fileName}
+                      </p>
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        Attached file
+                      </p>
+                    </div>
+                  </div>
+                ) : null}
                 {msg.content && (
                   <div className="max-w-[75%]  bg-zinc-800 text-zinc-100 px-4 py-2.5 rounded-3xl rounded-tr-md text-[15px] leading-relaxed">
                     <p className="whitespace-pre-wrap wrap-break-word">

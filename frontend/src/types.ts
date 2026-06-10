@@ -11,6 +11,7 @@ export interface Message {
   content: string;
   thinking?: string;
   file?: File;
+  fileName?: string;
   toolCalls?: ToolCall[];
   id: string;
   clarification?: {

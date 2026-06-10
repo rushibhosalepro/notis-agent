@@ -109,10 +109,22 @@ export async function getCase(args: { caseId: string }): Promise<string> {
   return JSON.stringify(c);
 }
 
+export async function setFirstMessageFileName(args: {
+  caseId: string;
+  fileName: string;
+}): Promise<void> {
+  const col = await casesCol();
+  await col.updateOne(
+    { caseId: args.caseId },
+    { $set: { "messages.0.fileName": args.fileName } },
+  );
+}
+
 export async function appendMessage(args: {
   caseId: string;
   role: "user" | "assistant";
   content: string;
+  fileName?: string;
 }): Promise<string> {
   const col = await casesCol();
 
@@ -121,6 +133,7 @@ export async function appendMessage(args: {
     messageId: `msg-${new ObjectId().toHexString()}`,
     role: args.role,
     content: args.content,
+    ...(args.fileName ? { fileName: args.fileName } : {}),
     createdAt: new Date(),
   };
 

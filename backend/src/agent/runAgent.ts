@@ -64,11 +64,18 @@ export async function runAgent(
     for await (const event of eventStream) {
       const parts = event.content?.parts || [];
 
+      // ADK SSE mode emits partial=true chunks during streaming, then a
+      // final partial=false event with the complete aggregated text.
+      // Skip text/thinking from the final event — we already sent the chunks.
+      const isAggregatedFinal = event.partial === false;
+
       for (const part of parts) {
         if (!part) continue;
 
         if (part.thought && part.text) {
-          send(res, { type: "thinking", text: part.text });
+          if (!isAggregatedFinal) {
+            send(res, { type: "thinking", text: part.text });
+          }
           continue;
         }
 
@@ -118,7 +125,7 @@ export async function runAgent(
           continue;
         }
 
-        if (part.text) {
+        if (part.text && !isAggregatedFinal) {
           fullAssistantText += part.text;
           send(res, { type: "text", text: part.text });
         }

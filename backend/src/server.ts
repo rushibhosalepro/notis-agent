@@ -7,7 +7,7 @@ import { createNotisAgent } from "./agent/notisAgent";
 import { ObjectId } from "mongodb";
 import type { Case, Message } from "./types";
 import { casesCol } from "./utils/database/mongodb";
-import { appendMessage, getMessages } from "./utils/database/functions";
+import { appendMessage, getMessages, setFirstMessageFileName } from "./utils/database/functions";
 
 const app = express();
 app.use(cors());
@@ -65,10 +65,42 @@ app.post("/api/case/start", async (req, res) => {
     return res.status(500).json({ ok: false, error: "Internal server error" });
   }
 });
+
+app.get("/api/user/:userId/cases", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const col = await casesCol();
+    const cases = await col
+      .find(
+        { userId },
+        {
+          projection: {
+            caseId: 1,
+            status: 1,
+            noticeDetails: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            "messages.0": 1,
+            _id: 0,
+          },
+        },
+      )
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .toArray();
+    return res.json(cases);
+  } catch (err) {
+    console.error("Failed to fetch user cases:", err);
+    return res.status(500).json({ ok: false, error: "Internal server error" });
+  }
+});
+
 app.get("/api/:caseId/messages", async (req, res) => {
   const { caseId } = req.params;
   if (!caseId || Array.isArray(caseId)) {
-    return res.status(400).json({ ok: false, error: "caseId must be a string" });
+    return res
+      .status(400)
+      .json({ ok: false, error: "caseId must be a string" });
   }
   try {
     const msgs = await getMessages({ caseId });
@@ -101,10 +133,17 @@ app.post("/api/:caseId/chat", upload.single("file"), async (req, res) => {
       .json({ ok: false, error: "caseId must be a string" });
   }
 
-  // Save new user message — skip if length === 1 (first message already saved at case creation)
   const latestMsg = messages[messages.length - 1];
-  if (messages.length > 1 && latestMsg?.role === "user") {
-    await appendMessage({ caseId, role: "user", content: latestMsg.content });
+  if (messages.length === 1 && file?.originalname) {
+    // First message was already saved at case creation — just patch in the filename
+    await setFirstMessageFileName({ caseId, fileName: file.originalname });
+  } else if (messages.length > 1 && latestMsg?.role === "user") {
+    await appendMessage({
+      caseId,
+      role: "user",
+      content: latestMsg.content,
+      ...(file?.originalname ? { fileName: file.originalname } : {}),
+    });
   }
 
   const noticeAgent = createNotisAgent({ caseId, userId, file });

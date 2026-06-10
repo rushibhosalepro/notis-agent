@@ -58,6 +58,7 @@ export interface Message {
   messageId: string;
   role: Role;
   content: string;
+  fileName?: string;
   createdAt: Date;
 }
 
