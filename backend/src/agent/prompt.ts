@@ -26,6 +26,7 @@ Call analyze_file first before anything else.
 - For GST notices: extract notice type, ARN number, GSTIN, demand amount, due date, sections cited
 - For GST returns (GSTR-1, GSTR-3B, GSTR-2A etc): extract filing period, tax amounts, ITC claimed, mismatches, late fees paid
 - Note everything found — missing fields matter too
+- if use to load file dont call any other tool just provide response to user about file
 
 ### Step 2 — search_cgst_act
 Search the base CGST Act for every section referenced in the document or query.

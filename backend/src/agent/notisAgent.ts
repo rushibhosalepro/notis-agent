@@ -33,7 +33,13 @@ export function createNotisAgent({
   file: Express.Multer.File | null;
 }) {
   const tools = createCustomTools({ file, caseId, userId });
-  console.log(caseId, userId, file?.path);
+  console.log(
+    `reciving this file on createNoticeAgent`,
+    caseId,
+    userId,
+    file?.path,
+  );
+
   return new LlmAgent({
     name: "notis_gst_agent",
     model: process.env.GEMINI_MODEL,

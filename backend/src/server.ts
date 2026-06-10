@@ -4,12 +4,16 @@ import path from "path";
 import multer from "multer";
 import { runAgent } from "./agent/runAgent";
 import { createNotisAgent } from "./agent/notisAgent";
+import { ObjectId } from "mongodb";
+import type { Case, Message } from "./types";
+import { casesCol } from "./utils/database/mongodb";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3001;
+
 const upload = multer({
   dest: path.join(process.cwd(), "tmp/uploads"),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10mb
@@ -19,6 +23,46 @@ const upload = multer({
       ? cb(null, true)
       : cb(new Error("Invalid file type"));
   },
+});
+
+app.post("/api/case/start", async (req, res) => {
+  try {
+    const { prompt, userId } = req.body;
+    if (!prompt)
+      return res.status(400).json({ ok: false, error: "prompt is required" });
+    if (!userId)
+      return res.status(400).json({ ok: false, error: "userId is required" });
+
+    const now = new Date();
+    const caseId = new ObjectId().toHexString();
+
+    const firstMessage: Message = {
+      _id: new ObjectId(),
+      messageId: `msg-${new ObjectId().toHexString()}`,
+      role: "user",
+      content: prompt,
+      createdAt: now,
+    };
+
+    const newCase: Case = {
+      _id: new ObjectId(),
+      caseId,
+      userId,
+      messages: [firstMessage],
+      status: "OPEN",
+      files: [],
+      drafts: [],
+      agentNotes: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await (await casesCol()).insertOne(newCase);
+    return res.status(201).json({ ok: true, caseId, case: newCase });
+  } catch (err) {
+    console.error("Failed to start case:", err);
+    return res.status(500).json({ ok: false, error: "Internal server error" });
+  }
 });
 app.post("/api/:caseId/chat", upload.single("file"), async (req, res) => {
   const { caseId } = req.params;
